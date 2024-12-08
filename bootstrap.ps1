@@ -18,82 +18,53 @@ $baseUrl = "https://raw.githubusercontent.com/$repoOwner/$repoName/$Branch"
 $devRoot = "C:\Dev"
 $scriptsRoot = "$devRoot\Scripts"
 
-# Create temporary directory for downloads
-$tempDir = New-Item -ItemType Directory -Force -Path "$env:TEMP\dev-setup-$(Get-Random)"
-
 try {
     Write-Host "Initializing development environment setup..." -ForegroundColor Cyan
 
-    # Function to download a file from GitHub
-    function Download-Script {
-        param (
-            [string]$RelativePath,
-            [string]$TargetPath
-        )
-        $url = "$baseUrl/$RelativePath"
-        $targetDir = Split-Path -Parent $TargetPath
-        
-        if (!(Test-Path $targetDir)) {
-            New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
-        }
-        
-        Write-Host "Downloading $RelativePath..." -ForegroundColor Yellow
-        try {
-            Invoke-WebRequest -Uri $url -OutFile $TargetPath
-        }
-        catch {
-            Write-Error "Failed to download $RelativePath : $_"
-        }
-    }
-
-    # Create initial directory structure
+    # Create Scripts directory
     Write-Host "Creating directory structure..." -ForegroundColor Cyan
-    New-Item -ItemType Directory -Force -Path "$scriptsRoot\machine" | Out-Null
-    New-Item -ItemType Directory -Force -Path "$scriptsRoot\user" | Out-Null
+    New-Item -ItemType Directory -Force -Path $scriptsRoot | Out-Null
 
-    # Define known scripts
-    $scripts = @{
-        "machine" = @(
-            "4.1 create-machine-structure.ps1"
-            "4.2.1 install-prerequisites.ps1"
-            "4.2.2 install-core-tools.ps1"
-            "4.3.1 configure-docker-machine.ps1"
-            "4.3.2 verify-docker.ps1"
-            "4.4 configure-shared-settings.ps1"
-            "4.5 create-project-template.ps1"
-        )
-        "user" = @(
-            "5.1.1 configure-onedrive-structure.ps1"
-            "5.1.2 create-sync-ignores.ps1"
-            "5.1.3 verify-onedrive-setup.ps1"
-            "5.2.1 install-vscode-extensions.ps1"
-            "5.2.2 configure-personal-tools.ps1"
-            "5.3.1 configure-git-user.ps1"
-            "5.3.2 configure-vscode-user.ps1"
-            "5.3.3 configure-powershell-profile.ps1"
-            "5.3.4 configure-npm-user.ps1"
-            "5.3.5 verify-personal-settings.ps1"
-            "5.4.1 configure-git-credentials.ps1"
-            "5.4.2 setup-ssh-keys.ps1"
-            "5.4.3 configure-npm-tokens.ps1"
-            "5.4.4 setup-docker-credentials.ps1"
-            "5.4.5 verify-credentials.ps1"
-            "5.5.1 verify-git-setup.ps1"
-            "5.5.2 verify-dev-environment.ps1"
-            "5.5.3 verify-onedrive-sync.ps1"
-            "5.5.4 verify-system.ps1"
-        )
+    # Download and process machine scripts
+    Write-Host "Downloading machine scripts..." -ForegroundColor Yellow
+    New-Item -ItemType Directory -Force -Path "$scriptsRoot\machine" | Out-Null
+    $machineFiles = (Invoke-WebRequest -Uri "https://github.com/jojorgen/dev-setup/tree/main/scripts/machine").Links.href |
+        Where-Object { $_ -like "*.ps1" } |
+        ForEach-Object { $_.Split('/')[-1] }
+    
+    foreach ($file in $machineFiles) {
+        $url = "$baseUrl/scripts/machine/$file"
+        $targetPath = "$scriptsRoot\machine\$file"
+        Invoke-WebRequest -Uri $url -OutFile $targetPath
+        Write-Host "Downloaded $file" -ForegroundColor Green
     }
 
-    # Download all scripts
-    foreach ($category in $scripts.Keys) {
-        Write-Host "`nDownloading $category scripts..." -ForegroundColor Cyan
-        foreach ($script in $scripts[$category]) {
-            $relativePath = "scripts/$category/$script"
-            $targetPath = "$scriptsRoot\$category\$script"
-            Download-Script -RelativePath $relativePath -TargetPath $targetPath
-        }
+    # Download and process user scripts
+    Write-Host "`nDownloading user scripts..." -ForegroundColor Yellow
+    New-Item -ItemType Directory -Force -Path "$scriptsRoot\user" | Out-Null
+    $userFiles = (Invoke-WebRequest -Uri "https://github.com/jojorgen/dev-setup/tree/main/scripts/user").Links.href |
+        Where-Object { $_ -like "*.ps1" } |
+        ForEach-Object { $_.Split('/')[-1] }
+    
+    foreach ($file in $userFiles) {
+        $url = "$baseUrl/scripts/user/$file"
+        $targetPath = "$scriptsRoot\user\$file"
+        Invoke-WebRequest -Uri $url -OutFile $targetPath
+        Write-Host "Downloaded $file" -ForegroundColor Green
     }
 
     Write-Host "`nSetup scripts downloaded successfully!" -ForegroundColor Green
-    Write-Host "Beginning environme
+    Write-Host "Beginning environment setup..." -ForegroundColor Cyan
+
+    # Start with machine setup
+    $firstScript = Get-ChildItem "$scriptsRoot\machine\4.1*.ps1" | Select-Object -First 1
+    if ($firstScript) {
+        Write-Host "Starting machine setup with $($firstScript.Name)..." -ForegroundColor Cyan
+        & $firstScript.FullName
+    } else {
+        Write-Warning "Could not find initial setup script in machine directory."
+    }
+
+} catch {
+    Write-Error "An error occurred: $_"
+}
