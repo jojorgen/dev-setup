@@ -22,24 +22,38 @@ try {
     Write-Host "Initializing development environment setup..." -ForegroundColor Cyan
 
     # Create Scripts directory structure
-    Write-Host "Creating directory structure..." -ForegroundColor Cyan
+    Write-Host "Creating Scripts directory structure..." -ForegroundColor Cyan
     New-Item -ItemType Directory -Force -Path "$scriptsRoot\machine" | Out-Null
     New-Item -ItemType Directory -Force -Path "$scriptsRoot\user" | Out-Null
 
-    # First download and run create-machine-structure.ps1
-    Write-Host "Downloading initial setup script..." -ForegroundColor Yellow
-    $url = "$baseUrl/scripts/machine/4.1 create-machine-structure.ps1"
-    $targetPath = "$scriptsRoot\machine\4.1 create-machine-structure.ps1"
-    
-    Invoke-WebRequest -Uri $url -OutFile $targetPath
-    Write-Host "Downloaded initial setup script" -ForegroundColor Green
+    # Download all scripts from each directory
+    $scriptDirs = @("machine", "setup", "user", "utils")
+    foreach ($dir in $scriptDirs) {
+        Write-Host "Downloading $dir scripts..." -ForegroundColor Yellow
+        # List files in the GitHub directory
+        $filesUrl = "https://api.github.com/repos/$repoOwner/$repoName/contents/scripts/$dir"
+        $files = Invoke-RestMethod -Uri $filesUrl
+        
+        foreach ($file in $files) {
+            if ($file.name -like "*.ps1") {
+                $url = "$baseUrl/scripts/$dir/$($file.name)"
+                $targetPath = "$scriptsRoot\$dir\$($file.name)"
+                Invoke-WebRequest -Uri $url -OutFile $targetPath
+                Write-Host "Downloaded $($file.name)" -ForegroundColor Green
+            }
+        }
+    }
+
+    Write-Host "Scripts downloaded successfully!" -ForegroundColor Green
+    Write-Host "Starting initial setup..." -ForegroundColor Cyan
 
     # Run the initial setup script
-    if (Test-Path $targetPath) {
-        Write-Host "Starting machine setup..." -ForegroundColor Cyan
-        & $targetPath
+    $firstScript = "$scriptsRoot\machine\4.1 create-machine-structure.ps1"
+    if (Test-Path $firstScript) {
+        Write-Host "Running machine setup..." -ForegroundColor Cyan
+        & $firstScript
     } else {
-        Write-Error "Could not find initial setup script: $targetPath"
+        Write-Error "Could not find initial setup script: $firstScript"
     }
 
 } catch {
