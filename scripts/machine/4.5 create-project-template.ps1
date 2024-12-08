@@ -46,6 +46,7 @@ $vsCodeExtensions = @"
         "ms-vsliveshare.vsliveshare"
     ]
 }
+
 "@
 $vsCodeExtensions | Out-File -FilePath (Join-Path $templateDir ".vscode\extensions.json") -Encoding utf8
 
