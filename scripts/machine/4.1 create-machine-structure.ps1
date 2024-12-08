@@ -12,23 +12,25 @@ $baseDir = "C:\Dev"
 # Define the complete directory structure
 $dirs = @(
     # Environment section
-    "Environment\AITools",           # AI-specific development environments
-    "Environment\Tools\configs",     # Standard development tools and configurations
-    "Environment\Docker",            # Docker tool container configurations
+    "Environment\AITools",           # AI development environments
+    "Environment\Docker",            # Docker configurations
+    "Environment\Tools\configs",     # Development tool configurations
     
-    # Scripts section (might already exist from bootstrap)
-    "Scripts\setup",                 # One-time setup scripts
-    "Scripts\utils",                 # Daily utility scripts
-    
-    # Tools section
-    "Tools\References",             # Documentation and examples
+    # Scripts section
+    "Scripts\machine",              # Machine-level setup scripts
+    "Scripts\setup",                # Setup scripts
+    "Scripts\user",                 # User-level scripts
+    "Scripts\utils",                # Utility scripts
     
     # Projects section
     "Projects\.github",             # GitHub templates
-    "Projects\ProjectTemplate",     # New project template
     "Projects\Products\Agents",     # AI agent implementations
+    "Projects\Products\Apps",       # Application projects
     "Projects\Products\Libraries",  # Reusable code libraries
-    "Projects\Products\Apps"        # Application projects
+    "Projects\ProjectTemplate",     # New project templates
+    
+    # Tools section
+    "Tools\References"              # Documentation and examples
 )
 
 # Create directories
@@ -112,13 +114,12 @@ logs/
 $gitignoreContent | Out-File -FilePath $gitignorePath -Encoding utf8
 Write-Host "Created .gitignore file at: $gitignorePath" -ForegroundColor Green
 
+Write-Host "`nNote:" -ForegroundColor Cyan
+Write-Host "Development tools that come with their own installers" -ForegroundColor Yellow
+Write-Host "(e.g., VS Code, GitHub Desktop) will be installed in their" -ForegroundColor Yellow
+Write-Host "default Windows locations, not in this directory structure." -ForegroundColor Yellow
+
 Write-Host "`nVerification steps:" -ForegroundColor Cyan
 Write-Host "1. Check directory structure using: tree C:\Dev /F" -ForegroundColor Yellow
 Write-Host "2. Verify permissions using: Get-Acl C:\Dev | Format-List" -ForegroundColor Yellow
 Write-Host "3. Review .gitignore content" -ForegroundColor Yellow
-
-# Note about application installations
-Write-Host "`nNote:" -ForegroundColor Cyan
-Write-Host "Development tools that come with their own installers (e.g., VS Code, GitHub Desktop)" -ForegroundColor Yellow
-Write-Host "will be installed in their default Windows locations." -ForegroundColor Yellow
-Write-Host "This structure is for configuration files and tools without standard installers." -ForegroundColor Yellow
